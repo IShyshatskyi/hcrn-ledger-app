@@ -1,0 +1,12 @@
+# Expected public tree after sync. Paths relative to repo root.
+README.md
+VERSION
+.gitignore
+LICENSE
+Makefile
+build.sh
+setup-native.sh
+glyphs/
+src/
+tests/
+scripts/

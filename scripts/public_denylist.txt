@@ -1,0 +1,16 @@
+# Public packaging denylist. Used by check_public_boundary.sh.
+# Maintainer extras: scripts/local/extra_denylist.txt (gitignored).
+
+[paths]
+crates/
+tools/
+kameniar
+keystone
+eratosthenes
+common-types
+p2p-proto
+stratum-worker
+
+[sources]
+# Intentionally empty in the public file — legacy monorepo path names in
+# comments/identifiers are historical; remaps happen in sync when needed.

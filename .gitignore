@@ -1,0 +1,15 @@
+bin/
+debug/
+dep/
+obj/
+.build/
+*.elf
+*.hex
+*.bin
+*.o
+.DS_Store
+scripts/local/upstream.env
+scripts/local/extra_denylist.txt
+scripts/local/*.txt
+!scripts/local/*.example
+!scripts/local/README.md
