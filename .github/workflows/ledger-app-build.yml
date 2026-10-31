@@ -1,8 +1,8 @@
 name: Build HCRN Ledger App
 
-# Manual (and tag) builds — produces sideload .hex via Ledger BOLOS SDK.
-# Local Docker is preferred when available (`./build.sh`); this unblocks
-# packaging hosts without Docker Desktop.
+# Manual (and tag) builds — produces sideload .hex via Ledger’s official
+# app-builder image (Clang + BOLOS SDK). Prefer local `./build.sh` when Docker
+# is available on a maintainer machine.
 on:
   workflow_dispatch:
     inputs:
@@ -15,6 +15,7 @@ on:
           - nano_s
           - nano_x
           - nano_sp
+          - stax
       attach_to_latest_release:
         description: 'Upload .hex/.elf to the latest GitHub Release'
         required: false
@@ -26,6 +27,9 @@ on:
 
 permissions:
   contents: write
+
+env:
+  BUILDER_IMAGE: ghcr.io/ledgerhq/ledger-app-builder/ledger-app-builder:latest
 
 jobs:
   host-test:
@@ -52,26 +56,29 @@ jobs:
             TARGET="nano_s"
           fi
           case "$TARGET" in
-            nano_s)  REPO="nanos-secure-sdk" ;;
-            nano_x)  REPO="nanox-secure-sdk" ;;
-            nano_sp) REPO="nanosplus-secure-sdk" ;;
+            nano_s)  SDK_VAR="NANOS_SDK" ;;
+            nano_x)  SDK_VAR="NANOX_SDK" ;;
+            nano_sp) SDK_VAR="NANOSP_SDK" ;;
+            stax)    SDK_VAR="STAX_SDK" ;;
             *) echo "unknown target $TARGET"; exit 1 ;;
           esac
           echo "target=$TARGET" >> "$GITHUB_OUTPUT"
-          echo "sdk_repo=$REPO" >> "$GITHUB_OUTPUT"
+          echo "sdk_var=$SDK_VAR" >> "$GITHUB_OUTPUT"
 
-      - name: Install ARM cross-compiler
+      - name: Pull Ledger app-builder
+        run: docker pull "$BUILDER_IMAGE"
+
+      - name: Build with BOLOS (Docker)
+        env:
+          SDK_VAR: ${{ steps.tgt.outputs.sdk_var }}
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
-
-      - name: Clone BOLOS SDK
-        run: |
-          git clone --depth 1 "https://github.com/LedgerHQ/${{ steps.tgt.outputs.sdk_repo }}.git" /opt/bolos-sdk
-          echo "BOLOS_SDK=/opt/bolos-sdk" >> "$GITHUB_ENV"
-
-      - name: Build
-        run: make
+          # Same expansion as ./build.sh: BOLOS_SDK=$NANOS_SDK (var lives in the image).
+          docker run --rm \
+            --platform linux/amd64 \
+            -v "$PWD":/app \
+            -w /app \
+            "$BUILDER_IMAGE" \
+            sh -c 'make clean && make BOLOS_SDK=$'"$SDK_VAR"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
@@ -108,5 +115,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          gh release upload "$TAG" dist/* --clobber
+          gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
