@@ -67,21 +67,17 @@ jobs:
       - name: Pull Ledger app-builder
         run: docker pull "$BUILDER_IMAGE"
 
-      - name: Probe builder env
-        run: |
-          docker run --rm --platform linux/amd64 --entrypoint bash "$BUILDER_IMAGE" -lc \
-            'echo NANOS_SDK=$NANOS_SDK; echo NANOX_SDK=$NANOX_SDK; command -v clang; clang --version | head -1; ls /opt'
-
       - name: Build with BOLOS (Docker)
         env:
           SDK_VAR: ${{ steps.tgt.outputs.sdk_var }}
         run: |
-          # Use bash -lc so image profile sets Clang; pass absolute SDK path from inside.
+          # Force CC=clang: GHA/make can otherwise leave CC=gcc and trip
+          # Makefile.rules_generic's "Compiler is not CLANG" check.
           docker run --rm --platform linux/amd64 \
             -v "$PWD":/app -w /app \
-            --entrypoint bash \
+            -e "CC=clang" \
             "$BUILDER_IMAGE" \
-            -lc "set -euo pipefail; SDK=\${$SDK_VAR}; echo Using BOLOS_SDK=\$SDK; test -d \"\$SDK\"; export BOLOS_SDK=\"\$SDK\"; make clean; make; ls -la bin/app.hex bin/app.elf"
+            bash -lc "set -euo pipefail; export BOLOS_SDK=\${$SDK_VAR}; echo BOLOS_SDK=\$BOLOS_SDK CC=\$CC; clang -v 2>&1 | head -2; make clean; make; ls -la bin/app.hex bin/app.elf"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
