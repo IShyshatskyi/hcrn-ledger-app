@@ -8,9 +8,7 @@
 
 app_ctx_t G_ctx;
 
-// Required by the UX library.
-ux_state_t G_ux;
-bolos_ux_params_t G_ux_params;
+// G_ux / G_ux_params come from lib_standard_app.
 
 // ── Utility implementations ───────────────────────────────────────────────────
 
