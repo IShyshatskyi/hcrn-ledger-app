@@ -71,13 +71,12 @@ jobs:
         env:
           SDK_VAR: ${{ steps.tgt.outputs.sdk_var }}
         run: |
-          # Force CC=clang: GHA/make can otherwise leave CC=gcc and trip
-          # Makefile.rules_generic's "Compiler is not CLANG" check.
+          # Keep image toolchain intact: CC=clang alone made `as` fall back to
+          # host GNU as (rejects -mcpu=cortex-m35p). Use clang for both CC and AS.
           docker run --rm --platform linux/amd64 \
             -v "$PWD":/app -w /app \
-            -e "CC=clang" \
             "$BUILDER_IMAGE" \
-            bash -lc "set -euo pipefail; export BOLOS_SDK=\${$SDK_VAR}; echo BOLOS_SDK=\$BOLOS_SDK CC=\$CC; clang -v 2>&1 | head -2; make clean; make; ls -la bin/app.hex bin/app.elf"
+            bash -lc "set -euo pipefail; export BOLOS_SDK=\${$SDK_VAR}; export CC=clang AS=clang; echo BOLOS_SDK=\$BOLOS_SDK; make clean; make; ls -la bin/app.hex bin/app.elf"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
