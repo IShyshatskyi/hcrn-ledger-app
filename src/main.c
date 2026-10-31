@@ -106,7 +106,8 @@ void io_seproxyhal_display(const bagl_element_t *element) {
 }
 
 unsigned char io_event(unsigned char channel) {
-    switch (seph_io_apdu_exchange_event()) {
+    (void) channel;
+    switch (G_io_seproxyhal_spi_buffer[0]) {
     case SEPROXYHAL_TAG_FINGER_EVENT:
         UX_FINGER_EVENT(G_io_seproxyhal_spi_buffer);
         break;
@@ -148,7 +149,7 @@ void app_main(void) {
 
     // Show idle / main menu.
     UX_INIT();
-    UX_FLOW_INIT(0, ux_idle_flow);
+    ux_flow_init(0, ux_idle_flow, NULL);
 
     BEGIN_TRY {
         TRY {

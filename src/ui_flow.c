@@ -39,7 +39,7 @@ UX_FLOW(ux_idle_flow,
     &ux_idle_step_quit);
 
 void ui_idle(void) {
-    UX_FLOW_INIT(0, ux_idle_flow);
+    ux_flow_init(0, ux_idle_flow, NULL);
 }
 
 // ── Sign transaction flow ─────────────────────────────────────────────────────

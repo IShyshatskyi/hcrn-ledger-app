@@ -45,9 +45,8 @@ docker run --rm \
   --platform linux/amd64 \
   -v "$(pwd)":/app \
   -w /app \
-  -e BOLOS_SDK="\$$SDK_VAR" \
   "$IMAGE" \
-  sh -c 'make clean && make BOLOS_SDK=$'"$SDK_VAR"
+  bash -lc "set -euo pipefail; export BOLOS_SDK=\${$SDK_VAR}; make clean; make"
 
 echo ""
 echo "Build complete!"
