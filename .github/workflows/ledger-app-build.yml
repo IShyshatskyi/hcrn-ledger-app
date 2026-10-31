@@ -70,13 +70,25 @@ jobs:
       - name: Build with BOLOS (Docker)
         env:
           SDK_VAR: ${{ steps.tgt.outputs.sdk_var }}
+          DEVICE_TARGET: ${{ steps.tgt.outputs.target }}
         run: |
-          # Keep image toolchain intact: CC=clang alone made `as` fall back to
-          # host GNU as (rejects -mcpu=cortex-m35p). Use clang for both CC and AS.
+          # Image CC defaults to gcc ("Compiler is not CLANG"). Force clang for
+          # CC/AS/LD. SDK AFLAGS omit --target=, so bare AS=clang assembles as
+          # host x86; export the same --target CFLAGS already use.
           docker run --rm --platform linux/amd64 \
             -v "$PWD":/app -w /app \
             "$BUILDER_IMAGE" \
-            bash -lc "set -euo pipefail; export BOLOS_SDK=\${$SDK_VAR}; export CC=clang AS=clang; echo BOLOS_SDK=\$BOLOS_SDK; make clean; make; ls -la bin/app.hex bin/app.elf"
+            bash -lc "set -euo pipefail
+              export BOLOS_SDK=\${$SDK_VAR}
+              export CC=clang AS=clang LD=clang
+              case \"$DEVICE_TARGET\" in
+                nano_s|nano_x) export AFLAGS=--target=armv6m-none-eabi ;;
+                *)             export AFLAGS=--target=armv8m-none-eabi ;;
+              esac
+              echo BOLOS_SDK=\$BOLOS_SDK CC=\$CC AS=\$AS LD=\$LD AFLAGS=\$AFLAGS
+              make clean
+              make
+              ls -la bin/app.hex bin/app.elf"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
