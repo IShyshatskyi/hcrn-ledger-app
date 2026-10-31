@@ -1,0 +1,112 @@
+name: Build HCRN Ledger App
+
+# Manual (and tag) builds — produces sideload .hex via Ledger BOLOS SDK.
+# Local Docker is preferred when available (`./build.sh`); this unblocks
+# packaging hosts without Docker Desktop.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Device target'
+        required: false
+        default: 'nano_s'
+        type: choice
+        options:
+          - nano_s
+          - nano_x
+          - nano_sp
+      attach_to_latest_release:
+        description: 'Upload .hex/.elf to the latest GitHub Release'
+        required: false
+        default: true
+        type: boolean
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  host-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run host test
+        run: |
+          cc -std=c99 -Wall -Wextra -Werror -I src tests/host/test_sighash.c src/sighash.c src/payload.c -o host_test
+          ./host_test
+
+  build:
+    needs: host-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve target
+        id: tgt
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TARGET="${{ github.event.inputs.target }}"
+          else
+            TARGET="nano_s"
+          fi
+          case "$TARGET" in
+            nano_s)  REPO="nanos-secure-sdk" ;;
+            nano_x)  REPO="nanox-secure-sdk" ;;
+            nano_sp) REPO="nanosplus-secure-sdk" ;;
+            *) echo "unknown target $TARGET"; exit 1 ;;
+          esac
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "sdk_repo=$REPO" >> "$GITHUB_OUTPUT"
+
+      - name: Install ARM cross-compiler
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Clone BOLOS SDK
+        run: |
+          git clone --depth 1 "https://github.com/LedgerHQ/${{ steps.tgt.outputs.sdk_repo }}.git" /opt/bolos-sdk
+          echo "BOLOS_SDK=/opt/bolos-sdk" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: make
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hcrn-ledger-${{ steps.tgt.outputs.target }}
+          path: |
+            bin/app.elf
+            bin/app.hex
+          retention-days: 30
+
+      - name: Rename release assets
+        run: |
+          TARGET="${{ steps.tgt.outputs.target }}"
+          mkdir -p dist
+          cp bin/app.hex "dist/hcrn-ledger-${TARGET}.hex"
+          cp bin/app.elf "dist/hcrn-ledger-${TARGET}.elf"
+          (cd dist && sha256sum "hcrn-ledger-${TARGET}.hex" > "hcrn-ledger-${TARGET}.hex.sha256")
+
+      - name: Attach to release (manual)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.attach_to_latest_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$TAG" ]; then
+            echo "No release found — skip attach"
+            exit 0
+          fi
+          gh release upload "$TAG" dist/* --clobber
+          echo "Attached to $TAG"
+
+      - name: Attach to tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          gh release upload "$TAG" dist/* --clobber
