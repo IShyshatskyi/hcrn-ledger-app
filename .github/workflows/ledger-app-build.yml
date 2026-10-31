@@ -1,8 +1,7 @@
 name: Build HCRN Ledger App
 
 # Manual (and tag) builds — produces sideload .hex via Ledger’s official
-# app-builder image (Clang + BOLOS SDK). Prefer local `./build.sh` when Docker
-# is available on a maintainer machine.
+# app-builder image. Prefer local `./build.sh` when Docker is available.
 on:
   workflow_dispatch:
     inputs:
@@ -68,17 +67,21 @@ jobs:
       - name: Pull Ledger app-builder
         run: docker pull "$BUILDER_IMAGE"
 
+      - name: Probe builder env
+        run: |
+          docker run --rm --platform linux/amd64 --entrypoint bash "$BUILDER_IMAGE" -lc \
+            'echo NANOS_SDK=$NANOS_SDK; echo NANOX_SDK=$NANOX_SDK; command -v clang; clang --version | head -1; ls /opt'
+
       - name: Build with BOLOS (Docker)
         env:
           SDK_VAR: ${{ steps.tgt.outputs.sdk_var }}
         run: |
-          # Same expansion as ./build.sh: BOLOS_SDK=$NANOS_SDK (var lives in the image).
-          docker run --rm \
-            --platform linux/amd64 \
-            -v "$PWD":/app \
-            -w /app \
+          # Use bash -lc so image profile sets Clang; pass absolute SDK path from inside.
+          docker run --rm --platform linux/amd64 \
+            -v "$PWD":/app -w /app \
+            --entrypoint bash \
             "$BUILDER_IMAGE" \
-            sh -c 'make clean && make BOLOS_SDK=$'"$SDK_VAR"
+            -lc "set -euo pipefail; SDK=\${$SDK_VAR}; echo Using BOLOS_SDK=\$SDK; test -d \"\$SDK\"; export BOLOS_SDK=\"\$SDK\"; make clean; make; ls -la bin/app.hex bin/app.elf"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
@@ -89,7 +92,7 @@ jobs:
             bin/app.hex
           retention-days: 30
 
-      - name: Rename release assets
+      - name: Stage release assets
         run: |
           TARGET="${{ steps.tgt.outputs.target }}"
           mkdir -p dist
