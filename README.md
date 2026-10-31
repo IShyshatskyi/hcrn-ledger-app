@@ -15,7 +15,7 @@ that path name is legacy; the public product name is **HCRN Ledger App**.
 | Item | State |
 |------|--------|
 | Sync from private monorepo | `./scripts/sync_ledger_app_public.sh` |
-| GitHub Releases / `.hex` / sideload | **None** until a tagged release is cut here |
+| GitHub Releases / `.hex` / sideload | **`v0.0.1-dev`** — Nano S+ `hcrn-ledger-nano_sp.hex` (+ `.elf`, `.sha256`). Unsigned sideload / developer mode only — **not** Ledger Live Store. Rebuild via Actions → `ledger-app-build`. |
 | Product notes | [Filament Hardware](https://heaviest-chain.netlify.app/Filament_Hardware.html) |
 
 ## Sync from the private monorepo (maintainers)
@@ -61,7 +61,9 @@ machine or VM you control — same isolation idea as
 ## Releases
 
 **GitHub Releases for this product belong only on this repository.**  
-Empty Releases means “no binary drop yet,” not “go look at Filament.”
+Do not look under Filament-testnet Releases for Ledger artifacts.
+
+Current: [v0.0.1-dev](https://github.com/IShyshatskyi/hcrn-ledger-app/releases/tag/v0.0.1-dev) (`hcrn-ledger-nano_sp.hex`).
 
 ## Relation to other repos
 
