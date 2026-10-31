@@ -32,6 +32,14 @@ DEFINES += APPVERSION_MAJOR=$(APPVERSION_M)
 DEFINES += APPVERSION_MINOR=$(APPVERSION_N)
 DEFINES += APPVERSION_PATCH=$(APPVERSION_P)
 
+# USB HID (legacy Makefile.defines apps must set these explicitly on current SDKs)
+DEFINES += HAVE_IO_USB HAVE_L4_USB_HID HAVE_USB_APDU
+DEFINES += IO_USB_MAX_ENDPOINTS=6
+DEFINES += IO_HID_EP_LENGTH=64
+DEFINES += USB_SEGMENT_SIZE=64
+DEFINES += HAVE_WEBUSB WEBUSB_URL_SIZE_B=0 WEBUSB_URL=""
+
+
 # ── Allowed BIP32 paths ───────────────────────────────────────────────────────
 # The OS enforces this allowlist — the app cannot sign with arbitrary paths.
 # m/44'/20000' covers all accounts and indices under the Shisha coin type.
