@@ -107,13 +107,13 @@ int schnorr_sign(const bip32_path_t *path,
     }
 
     *sig_len_out = 64;
+    /* SDK ≥ current nanosplus: 7-arg signature (no trailing info ptr). */
     cx_err_t err = cx_ecschnorr_sign_no_throw(
         &privkey,
         CX_ECSCHNORR_BIP0340 | CX_RND_RFC6979,
         CX_SHA256,
         msg_hash, 32,
-        sig_out, sig_len_out,
-        NULL
+        sig_out, sig_len_out
     );
 
     explicit_bzero(&privkey, sizeof(privkey));

@@ -80,4 +80,4 @@ static inline void send_sw(volatile unsigned int *tx, uint16_t sw) {
 void format_amount(char *out, size_t out_len, uint64_t atoms);
 
 // Encode `bytes` (len bytes) as lowercase hex into `out` (must be 2*len+1 bytes).
-void bytes_to_hex(char *out, const uint8_t *bytes, size_t len);
+void app_bytes_to_hex(char *out, const uint8_t *bytes, size_t len);

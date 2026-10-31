@@ -34,7 +34,7 @@ static void prepare_display_strings(void) {
     format_chain_label(G_ctx.shard_str, sizeof(G_ctx.shard_str), tx->chain_id);
 
     if (tx->n_outputs == 1) {
-        bytes_to_hex(G_ctx.recipient_str, tx->outputs[0].recipient, 32);
+        app_bytes_to_hex(G_ctx.recipient_str, tx->outputs[0].recipient, 32);
     } else {
         snprintf(G_ctx.recipient_str, sizeof(G_ctx.recipient_str),
                  "%u outputs", (unsigned)tx->n_outputs);

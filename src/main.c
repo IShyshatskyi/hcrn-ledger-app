@@ -21,7 +21,7 @@ void format_amount(char *out, size_t out_len, uint64_t atoms) {
              (unsigned long long)whole, (unsigned long long)frac);
 }
 
-void bytes_to_hex(char *out, const uint8_t *bytes, size_t len) {
+void app_bytes_to_hex(char *out, const uint8_t *bytes, size_t len) {
     static const char hex[] = "0123456789abcdef";
     for (size_t i = 0; i < len; i++) {
         out[2*i]     = hex[(bytes[i] >> 4) & 0xF];

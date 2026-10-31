@@ -50,7 +50,7 @@ void finish_get_public_key(bool approved) {
     get_x_only_pubkey(&pubkey, x_only);
 
     char addr_hex[65];
-    bytes_to_hex(addr_hex, x_only, 32);
+    app_bytes_to_hex(addr_hex, x_only, 32);
 
     G_io_apdu_buffer[*s_tx] = 64;
     (*s_tx)++;
@@ -102,7 +102,7 @@ void handle_get_public_key(uint8_t p1, uint8_t p2,
 
     uint8_t x_only[32];
     get_x_only_pubkey(&pubkey, x_only);
-    bytes_to_hex(G_ctx.recipient_str, x_only, 32);
+    app_bytes_to_hex(G_ctx.recipient_str, x_only, 32);
     G_ctx.recipient_str[64] = '\0';
 
     if (p1 == P1_NO_CONFIRM) {

@@ -8,7 +8,7 @@ on:
       target:
         description: 'Device target'
         required: false
-        default: 'nano_s'
+        default: 'nano_sp'
         type: choice
         options:
           - nano_s
@@ -52,7 +52,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             TARGET="${{ github.event.inputs.target }}"
           else
-            TARGET="nano_s"
+            TARGET="nano_sp"
           fi
           case "$TARGET" in
             nano_s)  SDK_VAR="NANOS_SDK" ;;
